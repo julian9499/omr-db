@@ -123,9 +123,9 @@ for i in range(0, ROWS):  # rows
             roi = thresh[y1:y2, x1:x2]
 
             percentile = (np.sum(roi == 255)/((y2-y1) * (x2-x1))) * 100
-            # print(percentile)
+            print(percentile)
 
-            if percentile > 40.0:
+            if percentile > 30.0:
                 if (j != 0 and boulders[i][j] == 0) or j == 0:
                     boulders[i][j] = k+1
 
@@ -139,83 +139,10 @@ for i in range(0, ROWS):
 
 
 print(boulders)
+
+
 # Show the image with the rectangles
-cv2.imwrite(f"checkboxes_{filename}", img)
-cv2.imshow("Checkboxes", cv2.resize(img, (0, 0), fx=0.5, fy=0.5))
+cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.5, fy=0.5))
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-# Compute the average height of all the bounding boxes
-# avg_height = sum([h for (x, y, w, h) in bounding_boxes if
-#                   w > width / 18.5 and h > height / 54 and 3.0 * h > w > 2.0 * h and y > 200]) / len(bounding_boxes)
-
-# Compute the rotation angle
-# angle = np.arctan(avg_height / img.shape[1])
-#
-# # # Rotate the image
-# # rows, cols = img.shape[:2]
-# # rotation_matrix = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle * 180 / np.pi, 1)
-# # img = cv2.warpAffine(img, rotation_matrix, (cols, rows))
-#
-# # Convert the image to grayscale
-# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#
-# # Threshold the image to binarize it
-# treshImg, thresh = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
-#
-# # Find contours in the thresholded image
-# contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-#
-# boxes = {}
-# lines = set()
-# for i in range(0, 33):
-#     boxes[i] = list()
-#
-# # Loop over the contours
-# for contour in contours:
-#     # Get the bounding box of the  contour
-#     x, y, w, h = cv2.boundingRect(contour)
-#
-#     # Check if the contour is a checkbox
-#     if 3 * h > w > 2 * h and w * h > width * height / 1000 and y > 150:
-#         collision = True
-#
-#         # Crop the region of interest (ROI)
-#         roi = gray[y:y + h, x:x + w]
-#         d = 44.3
-#         line = int(round((y - 222) / (height / d))) + 1
-#         lines.add(line)
-#         box = {}
-#         box["boundingBox"] = (x, y, w, h)
-#
-#         # Count the number of white pixels in the ROI
-#         white_pixels = np.sum(roi == 255)
-#         # print(y)
-#         # edges = cv2.Canny(roi, 100, 200)
-#
-#         # Draw a rectangle around the checkbox
-#         # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-#
-#         cv2.rectangle(img, (60, y), (110, y + h - 5), (255, 255, 255), -1)
-#         cv2.putText(img, f"{line}", (60, y + int((height / 45.1) / 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-#         # cv2.imshow("Edges", edges)
-#         # cv2.waitKey(0)
-#         # Use Tesseract to extract the text from the ROI
-#         # text = pytesseract.image_to_string(roi)
-#
-#         # Write the text on the image
-#         # cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-#
-#         # Check if the ROI is filled or not filled
-#         if not collision:  # white_pixels > (w * h) * 0.8:
-#             # print("Checkbox is not filled")
-#             cv2.putText(img, f"{line}", (x, int(y + h / 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-#             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 1)
-#             box["filled"] = False
-#         else:
-#             # print("Checkbox is filled")
-#             cv2.putText(img, f"{line}", (x, int(y + h / 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-#             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 1)
-#             box["filled"] = True
-#
-#         boxes[line].append(box)
