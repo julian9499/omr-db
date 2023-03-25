@@ -156,38 +156,38 @@ def getScore(filename):
     change = False
     changeIndex = -1
     currind = 0
-    while not finish:
-        cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.35, fy=0.35))
-        key = cv2.waitKey(0)
-        if key == ord('w'):  # arrow key up
-            if currind < 29:
-                currind += 1
-        elif key == ord('s'):  # arrow key down
-            if currind > 0:
-                currind -= 1
-        elif key == ord('c'):  # change
-            change = not change
-        elif key == ord('z'):  # change
-            if change:
-                changeIndex = 1
-        elif key == ord('t'):  # change
-            if change:
-                changeIndex = 2
-        elif ord('0') < key < ord('9') and change and changeIndex != -1:
-            boulders[currind][changeIndex] = key - ord('0')
-            x1 = int((columns[0][0] + colspace * (4.0 + 1.2*changeIndex) * dimensions[0] + corners[0][0]))
-            y1 = int((columns[0][1] + 0.005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
-            cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 255), 5)
-            change = False
-            changeIndex = -1
-        elif key == ord('d'):
-            print("done!")
-            finish = True
-        print(currind)
+    # while not finish:
+    #     cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.35, fy=0.35))
+    #     key = cv2.waitKey(0)
+    #     if key == ord('w'):  # arrow key up
+    #         if currind < 29:
+    #             currind += 1
+    #     elif key == ord('s'):  # arrow key down
+    #         if currind > 0:
+    #             currind -= 1
+    #     elif key == ord('c'):  # change
+    #         change = not change
+    #     elif key == ord('z'):  # change
+    #         if change:
+    #             changeIndex = 1
+    #     elif key == ord('t'):  # change
+    #         if change:
+    #             changeIndex = 2
+    #     elif ord('0') < key < ord('9') and change and changeIndex != -1:
+    #         boulders[currind][changeIndex] = key - ord('0')
+    #         x1 = int((columns[0][0] + colspace * (4.0 + 1.2*changeIndex) * dimensions[0] + corners[0][0]))
+    #         y1 = int((columns[0][1] + 0.005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
+    #         cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 255), 5)
+    #         change = False
+    #         changeIndex = -1
+    #     elif key == ord('d'):
+    #         print("done!")
+    #         finish = True
+    #     print(currind)
     exportString = ""
     exportString += filename[len(filename)-7:len(filename)-4]
-    for i in boulders:
-        exportString += f",{i[0]},{i[1]},{i[2]}"
+    for i in range(0, len(boulders)):
+        exportString += f",{i}T{boulders[i][1]}Z{boulders[i][2]}"
     cv2.destroyAllWindows()
     return exportString
 
