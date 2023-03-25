@@ -16,6 +16,12 @@ if not isExist:
    os.makedirs(path)
    print("Made dir: toscan")
 
+path = "errored"
+isExist = os.path.exists(path)
+if not isExist:
+   os.makedirs(path)
+   print("Made dir: errored")
+
 path = "./toscan"
 onlyfiles = [f for f in listdir("./toscan") if isfile(join("./toscan", f))]
 
