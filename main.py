@@ -9,7 +9,7 @@ ROWS = 30
 ANSWERS = 3
 
 epsilon = 10 #image error sensitivity
-filename = "./scanned/sanitycheck.jpg"
+filename = "temp/sanitycheck.jpg"
 
 # load tracking tags
 tags = [cv2.imread("markers/top_left.png", cv2.IMREAD_GRAYSCALE),
