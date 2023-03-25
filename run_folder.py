@@ -19,13 +19,8 @@ if not isExist:
 path = "./toscan"
 onlyfiles = [f for f in listdir("./toscan") if isfile(join("./toscan", f))]
 
-
-csvFile = open("results.csv", "x")
-csvFile.close()
-
 csvFile = open("results.csv", "a")
 
-print(onlyfiles)
 for f in onlyfiles:
     totalFileName = join("./toscan",f)
     csvLine = getScore(totalFileName)

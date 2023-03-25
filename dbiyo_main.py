@@ -187,7 +187,7 @@ def getScore(filename):
     exportString = ""
     exportString += filename[len(filename)-7:len(filename)-4]
     for i in range(0, len(boulders)):
-        exportString += f",{i}T{boulders[i][1]}Z{boulders[i][2]}"
+        exportString += f",B{i+1} T{boulders[i][1]}Z{boulders[i][2]}"
     cv2.destroyAllWindows()
     return exportString
 
