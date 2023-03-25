@@ -77,12 +77,12 @@ def getScore(filename):
 
     # FindCorners(img, False)
     # print(corners)
-    #
-    # desired_points = np.float32([[68, 424], [1489, 424], [68, 1797], [1489, 1797]])
+    # #
+    # desired_points = np.float32([[112, 350], [2282, 350], [112, 3310], [2282, 3310]])
     # points = np.float32(corners)
     #
     # M = cv2.getPerspectiveTransform(points, desired_points)
-    # sheet = cv2.warpPerspective(img, M, (1589, 1997))
+    # sheet = cv2.warpPerspective(img, M, (2282, 3310))
     #
     # img = sheet
     height, width, channels = img.shape
@@ -93,12 +93,6 @@ def getScore(filename):
 
     # Threshold the image to binarize it
     treshImg, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
-
-    xdis, ydis = corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]
-    answersBoundingbox = [(int(corners[0][0] + 0.035 * xdis), corners[0][1] + int(0.055 * ydis)),
-                          (corners[3][0] - int(0.15 * xdis), corners[3][1] - int(0.21 * ydis))]
-    # cv2.rectangle(img, answersBoundingbox[0],
-    #         answersBoundingbox[1], (0, 255, 0), thickness=2, lineType=8, shift=0)
 
     # calculate dimensions for scaling
     dimensions = [corners[1][0] - corners[0][0], corners[2][1] - corners[0][1]]
@@ -156,38 +150,49 @@ def getScore(filename):
     change = False
     changeIndex = -1
     currind = 0
-    # while not finish:
-    #     cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.35, fy=0.35))
-    #     key = cv2.waitKey(0)
-    #     if key == ord('w'):  # arrow key up
-    #         if currind < 29:
-    #             currind += 1
-    #     elif key == ord('s'):  # arrow key down
-    #         if currind > 0:
-    #             currind -= 1
-    #     elif key == ord('c'):  # change
-    #         change = not change
-    #     elif key == ord('z'):  # change
-    #         if change:
-    #             changeIndex = 1
-    #     elif key == ord('t'):  # change
-    #         if change:
-    #             changeIndex = 2
-    #     elif ord('0') < key < ord('9') and change and changeIndex != -1:
-    #         boulders[currind][changeIndex] = key - ord('0')
-    #         x1 = int((columns[0][0] + colspace * (4.0 + 1.2*changeIndex) * dimensions[0] + corners[0][0]))
-    #         y1 = int((columns[0][1] + 0.005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
-    #         cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 255), 5)
-    #         change = False
-    #         changeIndex = -1
-    #     elif key == ord('d'):
-    #         print("done!")
-    #         finish = True
-    #     print(currind)
+    while not finish:
+        cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.45, fy=0.45))
+        key = cv2.waitKey(0)
+        if key == ord('w'):  # arrow key up
+            if currind < 29:
+                currind += 1
+        elif key == ord('s'):  # arrow key down
+            if currind > 0:
+                currind -= 1
+        elif key == ord('c'):  # change
+            change = not change
+        elif key == ord('z'):  # change
+            if change:
+                changeIndex = 1
+        elif key == ord('t'):  # change
+            if change:
+                changeIndex = 2
+        elif ord('0') < key < ord('9') and change and changeIndex != -1:
+            boulders[currind][changeIndex] = key - ord('0')
+            x1 = int((columns[0][0] + colspace * (4.0 + 1.2*changeIndex) * dimensions[0] + corners[0][0]))
+            y1 = int((columns[0][1] + 0.005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
+            cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 255), 5)
+            change = False
+            changeIndex = -1
+        elif key == ord('d'):
+            print("done!")
+            finish = True
+        print(currind)
+
     exportString = ""
     exportString += filename[len(filename)-7:len(filename)-4]
+    amountZT = [0,0]
+    triesZT = [0,0]
     for i in range(0, len(boulders)):
-        exportString += f",B{i+1} T{boulders[i][1]}Z{boulders[i][2]}"
+        triesZT[0] += boulders[i][1]
+        triesZT[1] += boulders[i][2]
+        if boulders[i][1] != 0:
+            amountZT[0] += boulders[i][1]
+        if boulders[i][2] != 0:
+            amountZT[1] += boulders[i][2]
+        exportString += f",B{i+1} T{boulders[i][2]}Z{boulders[i][1]}"
+    exportString += f",T{amountZT[0]}Z{amountZT[1]}"
+    exportString += f",T{triesZT[0]}Z{triesZT[1]}"
     cv2.destroyAllWindows()
     return exportString
 
