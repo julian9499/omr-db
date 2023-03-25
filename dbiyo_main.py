@@ -82,7 +82,7 @@ def getScore(filename):
     points = np.float32(corners)
 
     M = cv2.getPerspectiveTransform(points, desired_points)
-    sheet = cv2.warpPerspective(img, M, (2500, 3520))
+    sheet = cv2.warpPerspective(img, M, (2500, 3540))
 
     img = sheet
     height, width, channels = img.shape
@@ -188,12 +188,13 @@ def getScore(filename):
         triesZT[0] += boulders[i][1]
         triesZT[1] += boulders[i][2]
         if boulders[i][1] != 0:
-            amountZT[0] += boulders[i][1]
+            amountZT[0] += 1
         if boulders[i][2] != 0:
-            amountZT[1] += boulders[i][2]
+            amountZT[1] += 1
         exportString += f",B{i+1} T{boulders[i][2]}Z{boulders[i][1]}"
     exportString += f",T{amountZT[0]}Z{amountZT[1]}"
     exportString += f",T{triesZT[0]}Z{triesZT[1]}"
+    print(exportString)
     cv2.destroyAllWindows()
     return exportString
 
