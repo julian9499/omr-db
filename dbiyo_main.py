@@ -19,10 +19,10 @@ def getScore(filename):
             cv2.imread("markers/bottom_right.png", cv2.IMREAD_GRAYSCALE)]
 
     scaling = [869.0, 840.0]  # scaling factor for 8.5in. x 11in. paper
-    columns = [[79.0 / scaling[0], 39.7 / scaling[1]]]  # dimensions of the columns of bubbles
+    columns = [[78 / scaling[0], 40.5 / scaling[1]]]  # dimensions of the columns of bubbles
     colspace = 137.2 / scaling[0]
     radius = 7.5 / scaling[0]  # radius of the bubbles
-    spacing = [35.3 / scaling[0], 22.35 / scaling[1]]  # spacing of the rows and columns
+    spacing = [36.2 / scaling[0], 22.35 / scaling[1]]  # spacing of the rows and columns
 
     # Load the image from file
     img = cv2.imread(filename)
@@ -75,16 +75,16 @@ def getScore(filename):
 
         return
 
-    # FindCorners(img, False)
-    # print(corners)
-    # #
-    # desired_points = np.float32([[112, 350], [2282, 350], [112, 3310], [2282, 3310]])
-    # points = np.float32(corners)
+    FindCorners(img, False)
+    print(corners)
     #
-    # M = cv2.getPerspectiveTransform(points, desired_points)
-    # sheet = cv2.warpPerspective(img, M, (2282, 3310))
-    #
-    # img = sheet
+    desired_points = np.float32([[112, 350], [2282, 350], [112, 3310], [2282, 3310]])
+    points = np.float32(corners)
+
+    M = cv2.getPerspectiveTransform(points, desired_points)
+    sheet = cv2.warpPerspective(img, M, (2500, 3520))
+
+    img = sheet
     height, width, channels = img.shape
     corners = []
     FindCorners(img, True)
@@ -92,7 +92,7 @@ def getScore(filename):
     gray = img  # cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Threshold the image to binarize it
-    treshImg, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
+    treshImg, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
 
     # calculate dimensions for scaling
     dimensions = [corners[1][0] - corners[0][0], corners[2][1] - corners[0][1]]
@@ -112,14 +112,15 @@ def getScore(filename):
                 y2 = int((columns[0][1] + i * spacing[1] + radius) * dimensions[1] + corners[0][1])
 
                 # draw rectangles around bubbles
-                # cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=1, lineType=8, shift=0)
+                cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=1, lineType=8, shift=0)
 
                 roi = thresh[y1:y2, x1:x2]
 
                 percentile = (np.sum(roi == 255) / (abs(y2 - y1) * abs(x2 - x1))) * 100
-                # print(percentile)
+                print(percentile)
+
                 rect = False
-                if percentile > 100.0:
+                if percentile > 105.0:
                     if j == 0:
                         boulders[i][j] = k + 1
                     if j == 1 and boulders[i][1] == 0:
