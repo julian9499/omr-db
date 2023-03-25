@@ -1,13 +1,15 @@
 import math
+
 import cv2 as cv2
 import numpy as np
+
 
 def getScore(filename):
     COLUMNS = 5
     ROWS = 30
     ANSWERS = 3
 
-    epsilon = 10 #image error sensitivity
+    epsilon = 10  # image error sensitivity
     # filename = "temp/form11.jpg"
 
     # load tracking tags
@@ -16,51 +18,49 @@ def getScore(filename):
             cv2.imread("markers/bottom_left.png", cv2.IMREAD_GRAYSCALE),
             cv2.imread("markers/bottom_right.png", cv2.IMREAD_GRAYSCALE)]
 
-    scaling = [869.0, 840.0] #scaling factor for 8.5in. x 11in. paper
-    columns = [[79.0 / scaling[0], 39.7 / scaling[1]]] #dimensions of the columns of bubbles
-    colspace = 137.2 /scaling[0]
-    radius = 7.5 / scaling[0] #radius of the bubbles
-    spacing = [35.3 / scaling[0], 22.35 / scaling[1]] #spacing of the rows and columns
+    scaling = [869.0, 840.0]  # scaling factor for 8.5in. x 11in. paper
+    columns = [[79.0 / scaling[0], 39.7 / scaling[1]]]  # dimensions of the columns of bubbles
+    colspace = 137.2 / scaling[0]
+    radius = 7.5 / scaling[0]  # radius of the bubbles
+    spacing = [35.3 / scaling[0], 22.35 / scaling[1]]  # spacing of the rows and columns
 
     # Load the image from file
     img = cv2.imread(filename)
     height, width, channels = img.shape
 
-
     corners = []  # array to hold found corners
 
-
     def FindCorners(paper, drawRect):
-        gray_paper = paper#cv2.cvtColor(paper, cv2.COLOR_BGR2GRAY) #convert image of paper to grayscale
+        gray_paper = paper  # cv2.cvtColor(paper, cv2.COLOR_BGR2GRAY) #convert image of paper to grayscale
 
-        #scaling factor used later
+        # scaling factor used later
         ratio = height / width
 
-        #error detection
+        # error detection
         if ratio == 0:
             return -1
 
-        #try to find the tags via convolving the image
+        # try to find the tags via convolving the image
         for tag in tags:
-            tag = cv2.resize(tag, (0,0), fx=ratio, fy=ratio) #resize tags to the ratio of the image
+            tag = cv2.resize(tag, (0, 0), fx=ratio, fy=ratio)  # resize tags to the ratio of the image
 
-            #convolve the image
+            # convolve the image
             convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
 
-
-            #find the maximum of the convolution
+            # find the maximum of the convolution
             corner = np.unravel_index(convimg.argmax(), convimg.shape)
 
-            #append the coordinates of the corner
-            corners.append([corner[1], corner[0]]) #reversed because array order is different than image coordinate
+            # append the coordinates of the corner
+            corners.append([corner[1], corner[0]])  # reversed because array order is different than image coordinate
 
-        #draw the rectangle around the detected markers
+        # draw the rectangle around the detected markers
         if drawRect:
             for corner in corners:
                 cv2.rectangle(paper, (corner[0] - int(ratio * 25), corner[1] - int(ratio * 25)),
-                (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2, lineType=8, shift=0)
+                              (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2,
+                              lineType=8, shift=0)
 
-        #check if detected markers form roughly parallel lines when connected
+        # check if detected markers form roughly parallel lines when connected
         if corners[0][0] - corners[2][0] > epsilon:
             return None
 
@@ -89,23 +89,23 @@ def getScore(filename):
     corners = []
     FindCorners(img, True)
 
-    gray = img#cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = img  # cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Threshold the image to binarize it
     treshImg, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
 
     xdis, ydis = corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]
-    answersBoundingbox = [(int(corners[0][0] + 0.035 *xdis), corners[0][1] + int(0.055 *ydis)), (corners[3][0] - int(0.15 * xdis), corners[3][1] - int(0.21 * ydis))]
+    answersBoundingbox = [(int(corners[0][0] + 0.035 * xdis), corners[0][1] + int(0.055 * ydis)),
+                          (corners[3][0] - int(0.15 * xdis), corners[3][1] - int(0.21 * ydis))]
     # cv2.rectangle(img, answersBoundingbox[0],
     #         answersBoundingbox[1], (0, 255, 0), thickness=2, lineType=8, shift=0)
 
     # calculate dimensions for scaling
     dimensions = [corners[1][0] - corners[0][0], corners[2][1] - corners[0][1]]
 
-
     boulders = list()
     for i in range(0, ROWS):
-        boulders.append([0,0,0])
+        boulders.append([0, 0, 0])
 
     # iterate over test questions
     for i in range(0, ROWS):  # rows
@@ -118,37 +118,76 @@ def getScore(filename):
                 y2 = int((columns[0][1] + i * spacing[1] + radius) * dimensions[1] + corners[0][1])
 
                 # draw rectangles around bubbles
-                cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=1, lineType=8, shift=0)
+                # cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=1, lineType=8, shift=0)
 
                 roi = thresh[y1:y2, x1:x2]
 
-                percentile = (np.sum(roi == 255)/(abs(y2-y1) * abs(x2-x1))) * 100
+                percentile = (np.sum(roi == 255) / (abs(y2 - y1) * abs(x2 - x1))) * 100
                 # print(percentile)
-
+                rect = False
                 if percentile > 100.0:
                     if j == 0:
-                        boulders[i][j] = k+1
+                        boulders[i][j] = k + 1
                     if j == 1 and boulders[i][1] == 0:
                         boulders[i][j] = k + 1
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=2, lineType=8, shift=0)
+                        rect = True
                     if j == 2:
-                        boulders[i][j] = k+1
+                        boulders[i][j] = k + 1
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=2, lineType=8, shift=0)
+                        rect = True
                         if boulders[i][1] == 0:
-                            boulders[i][1] = k+1
+                            boulders[i][1] = k + 1
+                            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=2, lineType=8, shift=0)
+                            rect = True
+                # if not rect:
+                # cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=0, lineType=8, shift=0)
 
     for i in range(0, ROWS):
         x1 = int((columns[0][0] + colspace * 4.7) * dimensions[0] + corners[0][0])
-        y1 = int((columns[0][1]+0.005 + i * spacing[1]) * dimensions[1] + corners[0][1])
+        y1 = int((columns[0][1] + 0.005 + i * spacing[1]) * dimensions[1] + corners[0][1])
         cv2.putText(img, str(boulders[i][1]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 190, 0), 5)
 
         x2 = int((columns[0][0] + colspace * 5.9) * dimensions[0] + corners[0][0])
         cv2.putText(img, str(boulders[i][2]), (x2, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 190, 0), 5)
 
-
-    print(boulders)
-
-
     # Show the image with the rectangles
-    cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.35, fy=0.35))
-    cv2.waitKey(0)
+    finish = False
+    change = False
+    changeIndex = -1
+    currind = 0
+    while not finish:
+        cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.35, fy=0.35))
+        key = cv2.waitKey(0)
+        if key == ord('w'):  # arrow key up
+            if currind < 29:
+                currind += 1
+        elif key == ord('s'):  # arrow key down
+            if currind > 0:
+                currind -= 1
+        elif key == ord('c'):  # change
+            change = not change
+        elif key == ord('z'):  # change
+            if change:
+                changeIndex = 1
+        elif key == ord('t'):  # change
+            if change:
+                changeIndex = 2
+        elif ord('0') < key < ord('9') and change and changeIndex != -1:
+            boulders[currind][changeIndex] = key - ord('0')
+            x1 = int((columns[0][0] + colspace * (4.0 + 1.2*changeIndex) * dimensions[0] + corners[0][0]))
+            y1 = int((columns[0][1] + 0.005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
+            cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 255), 5)
+            change = False
+            changeIndex = -1
+        elif key == ord('d'):
+            print("done!")
+            finish = True
+        print(currind)
+    exportString = ""
+    exportString += filename[len(filename)-7:len(filename)-4]
+    for i in boulders:
+        exportString += f",{i[0]},{i[1]},{i[2]}"
     cv2.destroyAllWindows()
+    return exportString
 
