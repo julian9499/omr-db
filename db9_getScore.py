@@ -5,7 +5,7 @@ import numpy as np
 
 def getScore(filename):
     COLUMNS = 9
-    ROWS = 30
+    ROWS = 20
     ANSWERS = 3
 
     epsilon = 10 #image error sensitivity
@@ -17,10 +17,10 @@ def getScore(filename):
             cv2.imread("markers/bottom_right.png", cv2.IMREAD_GRAYSCALE)]
 
     scaling = [869.0, 840.0] #scaling factor for 8.5in. x 11in. paper
-    columns = [[55.5 / scaling[0], 66.5 / scaling[1]]] #dimensions of the columns of bubbles
-    colspace = 76.8 /scaling[0]
-    radius = 6.5 / scaling[0] #radius of the bubbles
-    spacing = [24.9 / scaling[0], 19.9 / scaling[1]] #spacing of the rows and columns
+    columns = [[52.8 / scaling[0], 63.2 / scaling[1]]] #dimensions of the columns of bubbles
+    colspace = 77.5 /scaling[0]
+    radius = 6.0 / scaling[0] #radius of the bubbles
+    spacing = [25.02 / scaling[0], 20.20 / scaling[1]] #spacing of the rows and columns
 
     # Load the image from file
     img = cv2.imread(filename)
@@ -92,7 +92,7 @@ def getScore(filename):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Threshold the image to binarize it
-    treshImg, thresh = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
+    treshImg, thresh = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
 
     xdis, ydis = corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]
     answersBoundingbox = [(int(corners[0][0] + 0.035 *xdis), corners[0][1] + int(0.055 *ydis)), (corners[3][0] - int(0.15 * xdis), corners[3][1] - int(0.21 * ydis))]
@@ -123,11 +123,22 @@ def getScore(filename):
                 roi = thresh[y1:y2, x1:x2]
 
                 percentile = (np.sum(roi == 255)/((y2-y1) * (x2-x1))) * 100
-                print(percentile)
 
+                # if percentile > 40.0:
+                #     if (j != 0 and boulders[i][j] == 0) or j == 0:
+                #         boulders[i][j] = k + 1
                 if percentile > 40.0:
-                    if (j != 0 and boulders[i][j] == 0) or j == 0:
+                    print(percentile)
+                    if j == 0:
                         boulders[i][j] = k + 1
+                    if j == 1 and boulders[i][1] == 0:
+                        boulders[i][j] = k + 1
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=2, lineType=8, shift=0)
+                    if j == 2:
+                        boulders[i][j] = k + 1
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=2, lineType=8, shift=0)
+                        if boulders[i][1] == 0:
+                            boulders[i][1] = k + 1
 
     for i in range(0, ROWS):
         x1 = int((columns[0][0] + colspace * 9.7) * dimensions[0] + corners[0][0])
@@ -137,8 +148,83 @@ def getScore(filename):
         x2 = int((columns[0][0] + colspace * 10.5) * dimensions[0] + corners[0][0])
         cv2.putText(img, str(boulders[i][2]), (x2, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 190, 0), 2)
 
+    # Show the image with the rectangles
+    finish = False
+    change = False
+    changeIndex = -1
+    currind = 0
+    name = ""
+    while not finish:
+        cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.7, fy=0.7))
+        key = cv2.waitKey(0)
+        if key == ord('w'):  # arrow key up
+            if currind < ROWS-1:
+                currind += 1
+        elif key == ord('s'):  # arrow key down
+            if currind > 0:
+                currind -= 1
+        elif key == ord('c'):  # change
+            change = not change
+        elif key == ord('z'):  # change
+            if change:
+                changeIndex = 1
+        elif key == ord('t'):  # change
+            if change:
+                changeIndex = 2
+        elif ord('0') <= key <= ord('9') and change and changeIndex != -1:
+            boulders[currind][changeIndex] = key - ord('0')
+            x1 = int((columns[0][0] + colspace * (8.7 + 1.3 * changeIndex) * dimensions[0] + corners[0][0]))
+            y1 = int((columns[0][1] + 0.0005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
+            cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8,
+                        (0, 0, 255), 2)
+            change = False
+            changeIndex = -1
+        elif key == ord('n'):
+            isNameDone = False
+            while not isNameDone:
+                cv2.rectangle(img, (0, 0), (width, 150), (255, 255, 255), -1)
+                cv2.putText(img, f"input name: {name}", (30, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+                cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.7, fy=0.7))
+                local_key = cv2.waitKey(0)
+                print(local_key)
+                if local_key == 13: # enter
+                    isNameDone = True
+                elif local_key == 8: #backspace
+                    name = name[:-1]
+                else:
+                    name = f"{name}{chr(local_key)}"
+        elif key == ord('d'):
+            print("done!")
+            finish = True
+        cv2.rectangle(img, (0,0), (width,150), (255, 255, 255), -1)
+        cv2.putText(img, f"input name: {name}", (30, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+        cv2.putText(img, f"B{str(currind+1)}", (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+        if change:
+            cv2.putText(img, "change", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+            if changeIndex == 1:
+                cv2.putText(img, "zone", (30, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+            elif changeIndex == 2:
+                cv2.putText(img, "top", (30, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
 
-    print(boulders)
+    exportString = f"{name},"
+    exportString += filename[9:]
+    amountZT = [0, 0]
+    triesZT = [0, 0]
+    for i in range(0, len(boulders)):
+        triesZT[0] += boulders[i][1]
+        triesZT[1] += boulders[i][2]
+        if boulders[i][1] != 0:
+            amountZT[0] += 1
+        if boulders[i][2] != 0:
+            amountZT[1] += 1
+        exportString += f",B{i + 1} T{boulders[i][2]}Z{boulders[i][1]}"
+    exportString += f",{amountZT[1]},{amountZT[0]}"
+    exportString += f",{triesZT[1]},{triesZT[0]}"
+    print(exportString)
+    cv2.destroyAllWindows()
+    return exportString
+
+
     # Show the image with the rectangles
     cv2.imwrite(f"checkboxes_{filename}", img)
     cv2.imshow("Checkboxes", cv2.resize(img, (0, 0), fx=0.7, fy=0.7))

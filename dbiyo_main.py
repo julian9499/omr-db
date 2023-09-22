@@ -8,12 +8,12 @@ import numpy as np
 
 
 def getScore(filename):
-    COLUMNS = 5
-    ROWS = 30
+    COLUMNS = 9
+    ROWS = 20
     ANSWERS = 3
 
     epsilon = 10  # image error sensitivity
-    # filename = "temp/form11.jpg"
+    filename = "../../AppData/Roaming/JetBrains/PyCharm2023.1/scratches/img20230922_17102421.jpg"
 
     # load tracking tags
     tags = [cv2.imread("markers/top_left.png", cv2.IMREAD_GRAYSCALE),
@@ -21,7 +21,7 @@ def getScore(filename):
             cv2.imread("markers/bottom_left.png", cv2.IMREAD_GRAYSCALE),
             cv2.imread("markers/bottom_right.png", cv2.IMREAD_GRAYSCALE)]
 
-    scaling = [869.0, 840.0]  # scaling factor for 8.5in. x 11in. paper
+    scaling = [869.0, 840.0]  # scaling factor for 8.5in. x 11in. paper 1660 2347
     columns = [[78 / scaling[0], 40.5 / scaling[1]]]  # dimensions of the columns of bubbles
     colspace = 137.2 / scaling[0]
     radius = 7.5 / scaling[0]  # radius of the bubbles
@@ -49,6 +49,7 @@ def getScore(filename):
 
             # convolve the image
             convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
+            cv2.imshow("results", cv2.resize(convimg, (0, 0), fx=0.35, fy=0.35))
 
             # find the maximum of the convolution
             corner = np.unravel_index(convimg.argmax(), convimg.shape)
@@ -79,15 +80,15 @@ def getScore(filename):
         return
 
     FindCorners(img, False)
-    # print(corners)
+    print(corners)
     #
     desired_points = np.float32([[112, 350], [2282, 350], [112, 3310], [2282, 3310]])
     points = np.float32(corners)
 
-    M = cv2.getPerspectiveTransform(points, desired_points)
-    sheet = cv2.warpPerspective(img, M, (2500, 3520))
-
-    img = sheet
+    # M = cv2.getPerspectiveTransform(points, desired_points)
+    # sheet = cv2.warpPerspective(img, M, (2500, 3520))
+    #
+    # img = sheet
     height, width, channels = img.shape
     corners = []
     FindCorners(img, True)
@@ -174,7 +175,7 @@ def getScore(filename):
         elif ord('0') <= key <= ord('9') and change and changeIndex != -1:
             boulders[currind][changeIndex] = key - ord('0')
             x1 = int((columns[0][0] + colspace * (4.0 + 1.2*changeIndex) * dimensions[0] + corners[0][0]))
-            y1 = int((columns[0][1] + 0.005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
+            y1 = int((columns[0][1] + currind * spacing[1]) * dimensions[1] + corners[0][1])
             cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 255), 5)
             change = False
             changeIndex = -1

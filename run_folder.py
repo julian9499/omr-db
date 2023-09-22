@@ -1,7 +1,7 @@
 import os
 from os import listdir
 from os.path import isfile, join
-from dbiyo_main import getScore
+from db9_getScore import getScore
 import shutil
 
 path = "processed"
@@ -16,7 +16,7 @@ if not isExist:
    os.makedirs(path)
    print("Made dir: toscan")
 
-path = "errored"
+path = "old/errored"
 isExist = os.path.exists(path)
 if not isExist:
    os.makedirs(path)
@@ -30,7 +30,7 @@ csvFile = open("results.csv", "a")
 for f in onlyfiles:
     totalFileName = join("./toscan",f)
     csvLine = getScore(totalFileName)
-    csvFile.write(csvLine + "\n")
+    csvFile.write(f"{csvLine}\n")
     csvFile.flush()
     shutil.move(totalFileName, join("./processed", f), copy_function=shutil.copy2)
 

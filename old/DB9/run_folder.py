@@ -22,17 +22,17 @@ if not isExist:
    os.makedirs(path)
    print("Made dir: errored")
 
-path = "./toscan"
-onlyfiles = [f for f in listdir("./toscan") if isfile(join("./toscan", f))]
+path = "toscan"
+onlyfiles = [f for f in listdir("toscan") if isfile(join("toscan", f))]
 
 csvFile = open("results.csv", "a")
 
 for f in onlyfiles:
-    totalFileName = join("./toscan",f)
+    totalFileName = join("toscan", f)
     csvLine = getScore(totalFileName)
     csvFile.write(csvLine + "\n")
     csvFile.flush()
-    shutil.move(totalFileName, join("./processed", f), copy_function=shutil.copy2)
+    shutil.move(totalFileName, join("processed", f), copy_function=shutil.copy2)
 
 csvFile.close()
 
