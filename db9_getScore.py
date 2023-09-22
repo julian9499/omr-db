@@ -154,6 +154,7 @@ def getScore(filename):
     changeIndex = -1
     currind = 0
     name = ""
+    # cv2.setMouseCallback('results', draw_circle)
     while not finish:
         cv2.imshow("results", cv2.resize(img, (0, 0), fx=0.7, fy=0.7))
         key = cv2.waitKey(0)
@@ -173,9 +174,9 @@ def getScore(filename):
                 changeIndex = 2
         elif ord('0') <= key <= ord('9') and change and changeIndex != -1:
             boulders[currind][changeIndex] = key - ord('0')
-            x1 = int((columns[0][0] + colspace * (8.7 + 1.3 * changeIndex) * dimensions[0] + corners[0][0]))
-            y1 = int((columns[0][1] + 0.0005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
-            cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.8,
+            x1 = int((columns[0][0] + colspace * (8.2 + 1.7 * changeIndex) * dimensions[0] + corners[0][0]))
+            y1 = int((columns[0][1] + 0.005 + currind * spacing[1]) * dimensions[1] + corners[0][1])
+            cv2.putText(img, str(boulders[currind][changeIndex]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 0, 255), 2)
             change = False
             changeIndex = -1
