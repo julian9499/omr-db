@@ -79,9 +79,9 @@ if __name__ == '__main__':
         img = cv2.imread(filename)
         height, width, channels = img.shape
 
-        corners = []  # array to hold found corners
 
         def FindCorners(paper, drawRect):
+            corners = [[], [], [], []]
             gray_paper = cv2.cvtColor(paper, cv2.COLOR_BGR2GRAY)  # convert image of paper to grayscale
 
             # scaling factor used later
@@ -91,19 +91,36 @@ if __name__ == '__main__':
             if ratio == 0:
                 return -1
 
-            # try to find the tags via convolving the image
-            for tag in tags:
-                tag = cv2.resize(tag, (0, 0), fx=ratio, fy=ratio)  # resize tags to the ratio of the image
+            dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_6X6_250)
+            parameters = cv.aruco.DetectorParameters()
+            detector = cv.aruco.ArucoDetector(dictionary, parameters)
 
-                # convolve the image
-                convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
-
-                # find the maximum of the convolution
-                corner = np.unravel_index(convimg.argmax(), convimg.shape)
-
-                # append the coordinates of the corner
-                corners.append(
-                    [corner[1], corner[0]])  # reversed because array order is different than image coordinate
+            markerCorners, markerIds, rejectedCandidates = detector.detectMarkers(gray_paper)
+            for corner, id in zip(markerCorners,markerIds):
+                print(corner[0][0])
+                if id == 3:
+                    corners[0] = list(map(int,corner[0][3]))
+                elif id == 2:
+                    corners[3] = list(map(int,corner[0][3]))
+                elif id == 1:
+                    corners[2] = list(map(int,corner[0][3]))
+                elif id == 4:
+                    corners[1] = list(map(int,corner[0][3]))
+            print(markerCorners)
+            print(markerIds)
+            # # try to find the tags via convolving the image
+            # for tag in tags:
+            #     tag = cv2.resize(tag, (0, 0), fx=ratio, fy=ratio)  # resize tags to the ratio of the image
+            #
+            #     # convolve the image
+            #     convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
+            #
+            #     # find the maximum of the convolution
+            #     corner = np.unravel_index(convimg.argmax(), convimg.shape)
+            #
+            #     # append the coordinates of the corner
+            #     corners.append(
+            #         [corner[1], corner[0]])  # reversed because array order is different than image coordinate
 
             # draw the rectangle around the detected markers
             if drawRect:
@@ -112,34 +129,33 @@ if __name__ == '__main__':
                                   (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2,
                                   lineType=8, shift=0)
 
-            # check if detected markers form roughly parallel lines when connected
-            if corners[0][0] - corners[2][0] > epsilon:
-                return None
+            # # check if detected markers form roughly parallel lines when connected
+            # if corners[0][0] - corners[2][0] > epsilon:
+            #     return None
+            #
+            # if corners[1][0] - corners[3][0] > epsilon:
+            #     return None
+            #
+            # if corners[0][1] - corners[1][1] > epsilon:
+            #     return None
+            #
+            # if corners[2][1] - corners[3][1] > epsilon:
+            #     return None
 
-            if corners[1][0] - corners[3][0] > epsilon:
-                return None
+            return corners
 
-            if corners[0][1] - corners[1][1] > epsilon:
-                return None
-
-            if corners[2][1] - corners[3][1] > epsilon:
-                return None
-
-            return
-
-        FindCorners(img, False)
+        corners = FindCorners(img, False)
         print(corners)
 
-        desired_points = np.float32([[68, 424], [1489, 424], [68, 1797], [1489, 1797]])
-        points = np.float32(corners)
-
-        M = cv2.getPerspectiveTransform(points, desired_points)
-        sheet = cv2.warpPerspective(img, M, (1589, 1997))
-
-        img = sheet
-        height, width, channels = img.shape
-        corners = []
-        FindCorners(img, True)
+        # desired_points = np.float32([[68, 424], [1489, 424], [68, 1797], [1489, 1797]])
+        # points = np.float32(corners)
+        #
+        # M = cv2.getPerspectiveTransform(points, desired_points)
+        # sheet = cv2.warpPerspective(img, M, (1589, 1997))
+        #
+        # img = sheet
+        # height, width, channels = img.shape
+        # corners = FindCorners(img, True)
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
