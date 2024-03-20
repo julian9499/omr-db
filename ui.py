@@ -12,9 +12,8 @@ COLUMNS = 9
 ROWS = 20
 ANSWERS = 3
 
-
 if __name__ == '__main__':
-    paths = ["processed","toscan", "errored"]
+    paths = ["processed", "toscan", "errored"]
     for p in paths:
         isExist = os.path.exists(p)
         if not isExist:
@@ -22,7 +21,8 @@ if __name__ == '__main__':
             print(f"Made dir: {p}")
 
     path = "./toscan"
-    fileList = [join(path,f) for f in os.listdir(path) if isfile(join(path, f))]
+    fileList = [join(path, f) for f in os.listdir(path) if isfile(join(path, f))]
+    print(fileList)
 
     csvFile = open("results.csv", "a")
 
@@ -30,8 +30,9 @@ if __name__ == '__main__':
     dpg.create_viewport(title='Review scores', width=1400, height=1000)
     dpg.setup_dearpygui()
 
+
     def get_next_file(isInitialization):
-        global filename,img,boulders,amountZT,triesZT,frame,data,texture_data
+        global filename, img, boulders, amountZT, triesZT, frame, data, texture_data
         if not isInitialization:
             shutil.move(filename, "./processed", copy_function=shutil.copy2)
         filename = fileList.pop()
@@ -58,7 +59,7 @@ if __name__ == '__main__':
 
     def read_file(filename):
         COLUMNS = 9
-        ROWS = 20
+        ROWS = 30
         ANSWERS = 3
 
         epsilon = 10  # image error sensitivity
@@ -79,7 +80,6 @@ if __name__ == '__main__':
         img = cv2.imread(filename)
         height, width, channels = img.shape
 
-
         def FindCorners(paper, drawRect):
             corners = [[], [], [], []]
             gray_paper = cv2.cvtColor(paper, cv2.COLOR_BGR2GRAY)  # convert image of paper to grayscale
@@ -96,66 +96,36 @@ if __name__ == '__main__':
             detector = cv.aruco.ArucoDetector(dictionary, parameters)
 
             markerCorners, markerIds, rejectedCandidates = detector.detectMarkers(gray_paper)
-            for corner, id in zip(markerCorners,markerIds):
-                print(corner[0][0])
+            for corner, id in zip(markerCorners, markerIds):
+                # print(corner[:,0][0])
                 if id == 3:
-                    corners[0] = list(map(int,corner[0][3]))
+                    corners[1] = [int(corner[0, :,0].mean()), int(corner[0, :, 1].mean())]
                 elif id == 2:
-                    corners[3] = list(map(int,corner[0][3]))
+                    corners[3] = [int(corner[0, :, 0].mean()), int(corner[0, :, 1].mean())]
                 elif id == 1:
-                    corners[2] = list(map(int,corner[0][3]))
+                    corners[2] = [int(corner[0, :, 0].mean()), int(corner[0, :, 1].mean())]
                 elif id == 4:
-                    corners[1] = list(map(int,corner[0][3]))
-            print(markerCorners)
-            print(markerIds)
-            # # try to find the tags via convolving the image
-            # for tag in tags:
-            #     tag = cv2.resize(tag, (0, 0), fx=ratio, fy=ratio)  # resize tags to the ratio of the image
-            #
-            #     # convolve the image
-            #     convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
-            #
-            #     # find the maximum of the convolution
-            #     corner = np.unravel_index(convimg.argmax(), convimg.shape)
-            #
-            #     # append the coordinates of the corner
-            #     corners.append(
-            #         [corner[1], corner[0]])  # reversed because array order is different than image coordinate
+                    corners[0] = [int(corner[0, :, 0].mean()), int(corner[0, :, 1].mean())]
 
             # draw the rectangle around the detected markers
             if drawRect:
                 for corner in corners:
-                    cv2.rectangle(paper, (corner[0] - int(ratio * 25), corner[1] - int(ratio * 25)),
-                                  (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2,
-                                  lineType=8, shift=0)
-
-            # # check if detected markers form roughly parallel lines when connected
-            # if corners[0][0] - corners[2][0] > epsilon:
-            #     return None
-            #
-            # if corners[1][0] - corners[3][0] > epsilon:
-            #     return None
-            #
-            # if corners[0][1] - corners[1][1] > epsilon:
-            #     return None
-            #
-            # if corners[2][1] - corners[3][1] > epsilon:
-            #     return None
+                    cv2.circle(paper, (corner[0], corner[1]), 20, (0, 255, 0), -1)
 
             return corners
 
         corners = FindCorners(img, False)
         print(corners)
 
-        # desired_points = np.float32([[68, 424], [1489, 424], [68, 1797], [1489, 1797]])
-        # points = np.float32(corners)
-        #
-        # M = cv2.getPerspectiveTransform(points, desired_points)
-        # sheet = cv2.warpPerspective(img, M, (1589, 1997))
-        #
-        # img = sheet
-        # height, width, channels = img.shape
-        # corners = FindCorners(img, True)
+        desired_points = np.float32([[68, 424], [1489, 424], [68, 1797], [1489, 1797]])
+        points = np.float32(corners)
+
+        M = cv2.getPerspectiveTransform(points, desired_points)
+        sheet = cv2.warpPerspective(img, M, (1589, 1997))
+
+        img = sheet
+        height, width, channels = img.shape
+        corners = FindCorners(img, True)
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -214,6 +184,7 @@ if __name__ == '__main__':
 
         return img, boulders
 
+
     def getAmountAndTries(boulders):
         amountZT = [0, 0]
         triesZT = [0, 0]
@@ -225,6 +196,7 @@ if __name__ == '__main__':
             if boulders[i][2] != 0:
                 amountZT[1] += 1
         return amountZT, triesZT
+
 
     def export_to_csv(sender, callback):
         global boulders, amountZT, triesZT, filename
@@ -247,12 +219,14 @@ if __name__ == '__main__':
         csvFile.flush()
         get_next_file(False)
 
+
     def update_amount_and_tries():
         global amountZT, triesZT
         dpg.set_value("zone_total", amountZT[0])
         dpg.set_value("tops_total", amountZT[1])
         dpg.set_value("zone_tries", triesZT[0])
         dpg.set_value("tops_tries", triesZT[1])
+
 
     def set_boulders(sender, app_data, user_data):
         global boulders, amountZT, triesZT
