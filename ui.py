@@ -8,8 +8,8 @@ import cv2 as cv
 import cv2 as cv2
 import numpy as np
 
-COLUMNS = 9
-ROWS = 20
+COLUMNS = 5
+ROWS = 30
 ANSWERS = 3
 
 if __name__ == '__main__':
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
 
     def read_file(filename):
-        COLUMNS = 9
+        COLUMNS = 5
         ROWS = 30
         ANSWERS = 3
 
@@ -71,10 +71,10 @@ if __name__ == '__main__':
                 cv2.imread("./markers/bottom_right.png", cv2.IMREAD_GRAYSCALE)]
 
         scaling = [869.0, 840.0]  # scaling factor for 8.5in. x 11in. paper
-        columns = [[52.8 / scaling[0], 63.2 / scaling[1]]]  # dimensions of the columns of bubbles
-        colspace = 77.5 / scaling[0]
-        radius = 6.0 / scaling[0]  # radius of the bubbles
-        spacing = [25.02 / scaling[0], 20.20 / scaling[1]]  # spacing of the rows and columns
+        columns = [[68.4 / scaling[0], 34.5 / scaling[1]]]  # dimensions of the columns of bubbles
+        colspace = 140.2 / scaling[0]
+        radius = 7.0 / scaling[0]  # radius of the bubbles
+        spacing = [38.39 / scaling[0], 22.72 / scaling[1]]  # spacing of the rows and columns
 
         # Load the image from file
         img = cv2.imread(filename)
