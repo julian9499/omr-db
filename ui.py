@@ -7,6 +7,8 @@ import dearpygui.dearpygui as dpg
 import cv2 as cv
 import cv2 as cv2
 import numpy as np
+import pytesseract
+from pytesseract import image_to_string
 
 COLUMNS = 5
 ROWS = 30
@@ -27,16 +29,22 @@ if __name__ == '__main__':
     csvFile = open("results.csv", "a")
 
     dpg.create_context()
-    dpg.create_viewport(title='Review scores', width=1400, height=1000)
+    dpg.create_viewport(title='Review scores', width=1400, height=1400)
     dpg.setup_dearpygui()
 
 
     def get_next_file(isInitialization):
-        global filename, img, boulders, amountZT, triesZT, frame, data, texture_data
+        global filename, img, boulders, amountZT, triesZT, frame, data, texture_data, participant_name ,participant_number
         if not isInitialization:
             shutil.move(filename, "./processed", copy_function=shutil.copy2)
+
+        path = "./toscan"
+        fileList = [join(path, f) for f in os.listdir(path) if isfile(join(path, f))]
+        if len(fileList) == 0:
+            exit(0)
         filename = fileList.pop()
-        img, boulders = read_file(filename)
+        print(filename)
+        img, boulders, participant_name, participant_number = read_file(filename)
         amountZT, triesZT = getAmountAndTries(boulders)
 
         scale_down = 0.6
@@ -52,9 +60,10 @@ if __name__ == '__main__':
                 dpg.set_value(f"zone_{i}", str(boulders[i - 1][1]))
                 dpg.set_value(f"tops_{i}", str(boulders[i - 1][2]))
                 update_amount_and_tries()
-                dpg.set_value("user_name", "")
+            dpg.set_value("user_name", f"{participant_name}")
+            dpg.set_value("user_number", f"{participant_number}")
         except:
-            print("first time")
+            print("Booting up")
 
 
     def read_file(filename):
@@ -107,21 +116,31 @@ if __name__ == '__main__':
                 elif id == 4:
                     corners[0] = [int(corner[0, :, 0].mean()), int(corner[0, :, 1].mean())]
 
+            print(corners)
+            if len(corners[0]) == 0:
+                corners[0] = [corners[2][0],corners[1][1]]
+            elif len(corners[1]) == 0:
+                corners[1] = [corners[3][0],corners[0][1]]
+            elif len(corners[2]) == 0:
+                corners[2] = [corners[0][0],corners[3][1]]
+            elif len(corners[3]) == 0:
+                corners[3] = [corners[1][0],corners[2][1]]
+
             # draw the rectangle around the detected markers
             if drawRect:
                 for corner in corners:
-                    cv2.circle(paper, (corner[0], corner[1]), 20, (0, 255, 0), -1)
+                    cv2.circle(paper, (corner[0], corner[1]), 10, (0, 0, 255), -1)
 
             return corners
 
         corners = FindCorners(img, False)
         print(corners)
 
-        desired_points = np.float32([[68, 424], [1489, 424], [68, 1797], [1489, 1797]])
+        desired_points = np.float32([[68, 200], [1489, 200], [68, 1800], [1489, 1800]])
         points = np.float32(corners)
 
         M = cv2.getPerspectiveTransform(points, desired_points)
-        sheet = cv2.warpPerspective(img, M, (1589, 1997))
+        sheet = cv2.warpPerspective(img, M, (1589, 1900))
 
         img = sheet
         height, width, channels = img.shape
@@ -130,13 +149,18 @@ if __name__ == '__main__':
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Threshold the image to binarize it
-        treshImg, thresh = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
+        treshImg, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
 
-        xdis, ydis = corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]
+        xdis, ydis = corners[3][0] - corners[1][0], corners[3][1] - corners[1][1]
         answersBoundingbox = [(int(corners[0][0] + 0.035 * xdis), corners[0][1] + int(0.055 * ydis)),
                               (corners[3][0] - int(0.15 * xdis), corners[3][1] - int(0.21 * ydis))]
-        cv2.rectangle(img, answersBoundingbox[0],
-                      answersBoundingbox[1], (0, 255, 0), thickness=2, lineType=8, shift=0)
+        # cv2.rectangle(img, answersBoundingbox[0],
+        #               answersBoundingbox[1], (0, 255, 0), thickness=2, lineType=8, shift=0)
+
+        cv2.rectangle(img, (150,40), (850, 130), (0,255,0), thickness=2, lineType=8)
+        print(imageToText(img[60:130, 910:1030]))
+        participant_number = imageToText(img[60:130, 910:1030]).strip().strip("\n")
+        participant_name = imageToText(img[40:130, 150:850]).strip().strip("\n")
 
         # calculate dimensions for scaling
         dimensions = [corners[1][0] - corners[0][0], corners[2][1] - corners[0][1]]
@@ -182,7 +206,7 @@ if __name__ == '__main__':
             x2 = int((columns[0][0] + colspace * 10.5) * dimensions[0] + corners[0][0])
             cv2.putText(img, str(boulders[i][2]), (x2, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 190, 0), 2)
 
-        return img, boulders
+        return img, boulders, participant_name, participant_number
 
 
     def getAmountAndTries(boulders):
@@ -199,9 +223,10 @@ if __name__ == '__main__':
 
 
     def export_to_csv(sender, callback):
-        global boulders, amountZT, triesZT, filename
-        name = dpg.get_value("user_name")
-        exportString = f"{name},"
+        global boulders, amountZT, triesZT, filename, participant_name, participant_number
+        p_name = dpg.get_value("user_name")
+        p_number = dpg.get_value("user_number")
+        exportString = f"{p_name},{p_number},"
         exportString += filename[9:]
         amountZT = [0, 0]
         triesZT = [0, 0]
@@ -218,6 +243,14 @@ if __name__ == '__main__':
         csvFile.write(f"{exportString}\n")
         csvFile.flush()
         get_next_file(False)
+
+    def imageToText(img):
+        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        gry = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        thr = cv2.threshold(gry, 100, 255,
+                            cv2.THRESH_BINARY_INV)[1]
+        txt = image_to_string(thr, lang='eng', config='--psm 6')
+        return txt
 
 
     def update_amount_and_tries():
@@ -253,7 +286,9 @@ if __name__ == '__main__':
                     dpg.add_image("texture_tag")
                 with dpg.table_cell():
                     dpg.add_text(f"Naam kandidaat:")
-                    dpg.add_input_text(tag=f"user_name")
+                    dpg.add_input_text(tag=f"user_name", default_value=participant_name)
+                    dpg.add_text(f"Nummer kandidaat:")
+                    dpg.add_input_text(tag=f"user_number", default_value=participant_number)
                     with dpg.table(header_row=False):
                         dpg.add_table_column(width_fixed=True)
                         dpg.add_table_column(width_fixed=True)
